@@ -13,6 +13,8 @@ app.use(require("webpack-dev-middleware")(compiler, {
     publicPath: config.output.publicPath
 }));
 
+app.use('/assets', express.static('assets'));
+
 app.use(require("webpack-hot-middleware")(compiler));
 
 app.get("*", function(req, res) {

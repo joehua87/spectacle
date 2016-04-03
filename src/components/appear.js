@@ -1,8 +1,10 @@
-import React, { PropTypes } from "react";
-import { findDOMNode } from "react-dom";
-import tweenState from "react-tween-state";
-import _ from "lodash";
-import { connect } from "react-redux";
+import React, { PropTypes } from 'react'
+import { findDOMNode } from 'react-dom'
+import tweenState from 'react-tween-state'
+import _ from 'lodash'
+import { connect } from 'react-redux'
+import Sound from 'react-sound'
+import { nextFragment } from '../actions'
 
 const Appear = React.createClass({
   mixins: [tweenState.Mixin],
@@ -30,8 +32,11 @@ const Appear = React.createClass({
       "id": parseInt(fragment.dataset.fid)
     });
     if (slide in state.fragments && state.fragments[slide].hasOwnProperty(key)) {
+      const isPlaying = state.playingFragment == key && state.playingSlide === slide // Check is sound is play for current Appear
+
       this.setState({
-        active: state.fragments[slide][key].visible
+        active: state.fragments[slide][key].visible,
+        isPlaying
       }, () => {
         let endVal = this.state.active ? 1 : 0;
         if (this.props.route.params.indexOf("export") !== -1 || this.props.route.params.indexOf("overview") !== -1) {
@@ -45,19 +50,35 @@ const Appear = React.createClass({
       });
     }
   },
+
   render() {
     const styles = {
       opacity: this.getTweeningValue("opacity")
     };
     const child = React.Children.only(this.props.children);
-    return React.cloneElement(
-      child,
-      {
-        style: Object.assign({}, this.props.style, styles),
-        className: "fragment",
-        ref: "fragment"
-      }
-    );
+
+    const props = {
+      style: Object.assign({}, this.props.style, styles),
+      className: "fragment",
+      ref: "fragment"
+    }
+
+    // Here to get the latest
+    const isPlaying = this.state.isPlaying
+
+    return (
+      <div {...props}>
+        { isPlaying && (
+          <Sound url={this.props.soundUrl} // Replace me with dynamic
+                 playStatus={isPlaying ? 'PLAYING' : 'STOPPED'}
+                 playFromPosition={300 /* in milliseconds */}
+                 onLoading={this.handleSongLoading}
+                 onPlaying={this.handleSongPlaying}
+                 onFinishedPlaying={() => this.props.dispatch(nextFragment())} />
+        ) }
+        { child }
+      </div>
+    )
   }
 });
 

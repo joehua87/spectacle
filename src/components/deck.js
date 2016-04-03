@@ -1,20 +1,19 @@
 /*eslint new-cap:0, max-statements:0*/
 /* eslint react/no-did-mount-set-state: 0 */
 
-import React, { Children, cloneElement, Component, PropTypes } from "react";
-import ReactTransitionGroup from "react-addons-transition-group";
-import Radium, { Style } from "radium";
-import _ from "lodash";
-import { connect } from "react-redux";
-import { updateFragment } from "../actions";
+import React, { Children, cloneElement, Component, PropTypes } from 'react'
+import ReactTransitionGroup from 'react-addons-transition-group'
+import Radium, { Style } from 'radium'
+import _ from 'lodash'
+import { connect } from 'react-redux'
+import { updateFragment, nextFragmentStarted } from '../actions'
+import Presenter from './presenter'
+import Export from './export'
+import Overview from './overview'
+import Fullscreen from './fullscreen'
+import Progress from './progress'
+import Controls from './controls'
 
-import Presenter from "./presenter";
-import Export from "./export";
-import Overview from "./overview";
-
-import Fullscreen from "./fullscreen";
-import Progress from "./progress";
-import Controls from "./controls";
 const TransitionGroup = Radium(ReactTransitionGroup);
 
 @connect((state) => state)
@@ -70,19 +69,32 @@ export default class Deck extends Component {
     });
     this._attachEvents();
   }
+
+  componentWillReceiveProps(nextProps) {
+    // Will go to next slide when triggered nextSlide or     
+    if (nextProps.fragment.nextSlide && !this.props.fragment.nextSlide
+      || nextProps.fragment.playingSlide !== this.props.fragment.playingSlide) {
+      this._nextSlide()
+      this.props.dispatch(nextFragmentStarted())
+    }
+  }
+
   componentWillUnmount() {
     this._detachEvents();
   }
+
   _attachEvents() {
     window.addEventListener("storage", this._goToSlide);
     window.addEventListener("keydown", this._handleKeyPress);
     window.addEventListener("resize", this._handleScreenChange);
   }
+
   _detachEvents() {
     window.removeEventListener("storage", this._goToSlide);
     window.removeEventListener("keydown", this._handleKeyPress);
     window.removeEventListener("resize", this._handleScreenChange);
   }
+
   _handleEvent(e) {
     const event = window.event ? window.event : e;
 
@@ -96,6 +108,7 @@ export default class Deck extends Component {
       this._togglePresenterMode();
     }
   }
+
   _handleKeyPress(e) {
     const event = window.event ? window.event : e;
 
@@ -105,20 +118,24 @@ export default class Deck extends Component {
 
     this._handleEvent(e);
   }
+
   _handleScreenChange() {
     this.setState({
       fullscreen: window.innerHeight === screen.height,
       mobile: window.innerWidth < 1000
     });
   }
+
   _toggleOverviewMode() {
     const suffix = this.props.route.params.indexOf("overview") !== -1 ? "" : "?overview";
     this.context.history.replaceState(null, `/${this.props.route.slide}${suffix}`);
   }
+
   _togglePresenterMode() {
     const suffix = this.props.route.params.indexOf("presenter") !== -1 ? "" : "?presenter";
     this.context.history.replaceState(null, `/${this.props.route.slide}${suffix}`);
   }
+
   _getSuffix() {
     if (this.props.route.params.indexOf("presenter") !== -1) {
       return "?presenter";
@@ -128,6 +145,7 @@ export default class Deck extends Component {
       return "";
     }
   }
+
   _goToSlide(e) {
     if (e.key === "spectacle-slide") {
       const data = JSON.parse(e.newValue);
@@ -140,6 +158,7 @@ export default class Deck extends Component {
       }
     }
   }
+
   _prevSlide() {
     const slide = this._getSlideIndex();
     this.setState({
@@ -149,13 +168,14 @@ export default class Deck extends Component {
       if (slide > 0) {
         this.context.history.replaceState(null, `/${this._getHash(slide - 1)}${this._getSuffix()}`);
         localStorage.setItem("spectacle-slide",
-          JSON.stringify({slide: this._getHash(slide - 1), forward: false, time: Date.now()}));
+          JSON.stringify({ slide: this._getHash(slide - 1), forward: false, time: Date.now() }));
       }
     } else if (slide > 0) {
       localStorage.setItem("spectacle-slide",
-        JSON.stringify({slide: this._getHash(slide), forward: false, time: Date.now()}));
+        JSON.stringify({ slide: this._getHash(slide), forward: false, time: Date.now() }));
     }
   }
+
   _nextSlide() {
     const slide = this._getSlideIndex();
     this.setState({
@@ -165,13 +185,14 @@ export default class Deck extends Component {
       if (slide < this.props.children.length - 1) {
         this.context.history.replaceState(null, `/${this._getHash(slide + 1) + this._getSuffix()}`);
         localStorage.setItem("spectacle-slide",
-          JSON.stringify({slide: this._getHash(slide + 1), forward: true, time: Date.now()}));
+          JSON.stringify({ slide: this._getHash(slide + 1), forward: true, time: Date.now() }));
       }
     } else if (slide < this.props.children.length) {
       localStorage.setItem("spectacle-slide",
-        JSON.stringify({slide: this._getHash(slide), forward: true, time: Date.now()}));
+        JSON.stringify({ slide: this._getHash(slide), forward: true, time: Date.now() }));
     }
   }
+
   _getHash(slide) {
     let hash = slide;
     if ("id" in this.props.children[slide].props) {
@@ -179,6 +200,7 @@ export default class Deck extends Component {
     }
     return hash;
   }
+
   _checkFragments(slide, forward) {
     const state = this.context.store.getState();
     const fragments = state.fragment.fragments;
@@ -217,6 +239,7 @@ export default class Deck extends Component {
       return true;
     }
   }
+
   _getTouchEvents() {
     const self = this;
 
@@ -256,6 +279,7 @@ export default class Deck extends Component {
       }
     };
   }
+
   _handleClick(e) {
     if (this.clickSafe === true) {
       e.preventDefault();
@@ -263,6 +287,7 @@ export default class Deck extends Component {
       e.nativeEvent.stopPropagation();
     }
   }
+
   _handleSwipe() {
     if (typeof (this.touchObject.length) !== "undefined" && this.touchObject.length > 44) {
       this.clickSafe = true;
@@ -280,6 +305,7 @@ export default class Deck extends Component {
 
     this.touchObject = {};
   }
+
   _swipeDirection(touch) {
     const xDist = touch.x1 - touch.x2;
     const yDist = touch.y1 - touch.y2;
@@ -301,6 +327,7 @@ export default class Deck extends Component {
 
     return 0;
   }
+
   _getSlideIndex() {
     let index = 0;
     if (!parseInt(this.props.route.slide)) {
@@ -314,6 +341,7 @@ export default class Deck extends Component {
     }
     return index;
   }
+
   _renderSlide() {
     const slide = this._getSlideIndex();
     const child = Children.toArray(this.props.children)[slide];
@@ -334,6 +362,7 @@ export default class Deck extends Component {
         this.props.transitionDuration
     });
   }
+
   render() {
     const globals = this.props.route.params.indexOf("export") !== -1 ? {
       body: Object.assign(this.context.styles.global.body, {
@@ -392,8 +421,7 @@ export default class Deck extends Component {
 
     }
 
-    const showControls = !this.state.fullscreen &&
-      !this.state.mobile &&
+    const showControls = !this.state.fullscreen && !this.state.mobile &&
       this.props.route.params.indexOf("export") === -1 &&
       this.props.route.params.indexOf("overview") === -1 &&
       this.props.route.params.indexOf("presenter") === -1;
@@ -406,27 +434,27 @@ export default class Deck extends Component {
         {...this._getTouchEvents()}
       >
         {this.props.controls && showControls &&
-            <Controls
-              currentSlide={this._getSlideIndex()}
-              totalSlides={children.length}
-              onPrev={this._prevSlide.bind(this)}
-              onNext={this._nextSlide.bind(this)}
-            />}
+        <Controls
+          currentSlide={this._getSlideIndex()}
+          totalSlides={children.length}
+          onPrev={this._prevSlide.bind(this)}
+          onNext={this._nextSlide.bind(this)}
+        />}
 
         {componentToRender}
 
         {
           this.props.route.params.indexOf("export") === -1 && this.props.route.params.indexOf("overview") === -1 ?
-          <Progress
-            items={children}
-            currentSlide={this._getSlideIndex()}
-            type={this.props.progress}
-          /> : ""
+            <Progress
+              items={children}
+              currentSlide={this._getSlideIndex()}
+              type={this.props.progress}
+            /> : ""
         }
 
         {
           this.props.route.params.indexOf("export") === -1 ?
-           <Fullscreen/> : ""
+            <Fullscreen /> : ""
         }
 
         <Style rules={Object.assign(this.context.styles.global, globals)} />

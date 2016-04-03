@@ -1,5 +1,5 @@
-import { createStore, applyMiddleware } from "redux";
-import reducer from "../reducers";
+import { createStore, applyMiddleware } from 'redux'
+import reducer from '../reducers'
 
 const configureStore = () => {
   const createStoreWithMiddleware = applyMiddleware()(createStore);
